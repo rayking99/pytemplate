@@ -1,81 +1,6 @@
-pyproject.toml
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-
-[project]
-name = "jp"
-version = "0.1.0"
-authors = [
-    { name = "jason pickup", email = "your.email@example.com" },
-]
-description = "A short description of your package"
-readme = "README.md"
-requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-    "requests>=2.28.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "black>=22.0",
-    "isort>=5.0",
-    "mypy>=1.0",
-    "ruff>=0.0.1",
-]
-
-[tool.pytest.ini_options]
-addopts = "-ra -q"
-testpaths = [
-    "tests",
-]
-
-[tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-
-[tool.ruff]
-select = ["E", "F", "B"]
-ignore = []
-line-length = 88
-
-```
-
 tests/__init__.py
 ```py
 
-```
-
-src/package/core.py
-```py
-"""Core functionality of my package."""
-
-def hello_world() -> str:
-    """Return a greeting.
-    
-    Returns:
-        str: A friendly greeting
-    """
-    return "Hello, World!"
 ```
 
 docs/conf.py
@@ -135,9 +60,17 @@ intersphinx_mapping = {
 
 ```
 
-src/package/clone.py
+src/package/core.py
 ```py
+"""Core functionality of my package."""
 
+def hello_world() -> str:
+    """Return a greeting.
+    
+    Returns:
+        str: A friendly greeting
+    """
+    return "Hello, World!"
 ```
 
 tests/test_core.py
@@ -149,6 +82,62 @@ from jp.core import hello_world
 def test_hello_world():
     """Test the hello_world function."""
     assert hello_world() == "Hello, World!"
+
+```
+
+src/tools/clone.py
+```py
+from glob import glob
+from pathlib import Path
+import shutil
+
+
+def clone(src, dst, package_name, overwrite=False):
+    replacements = {
+        "jp": package_name,
+        "JUSTPACKAGE": " ".join(map(str.capitalize, package_name.split("_"))),
+        "my package": " ".join(package_name.split("_")),
+        "package_description": "A package description",
+        "package": package_name,
+    }
+    folders = glob(f"{src}/**/", recursive=True)
+    # NOT __PYCACHE__ FOLDER
+    folders = [folder for folder in folders if "__pycache__" not in folder]
+
+    for folder in folders:
+        # Create corresponding directory in destination
+        dest_folder = folder.replace(src, dst)
+        for key, value in replacements.items():
+            dest_folder = dest_folder.replace(key, value)
+
+        Path(dest_folder).mkdir(parents=True, exist_ok=True)
+
+        files = glob(f"{folder}/*")
+        for file in files:
+            if Path(file).is_dir():
+                continue  # Skip directories
+            with open(file, "r") as f:
+                content = f.read()
+
+            for key, value in replacements.items():
+                content = content.replace(key, value)
+
+            dest_file = file.replace(src, dst)
+            for key, value in replacements.items():
+                dest_file = dest_file.replace(key, value)
+
+            with open(dest_file, "w") as f:
+                f.write(content)
+
+
+if __name__ == "__main__":
+    clone(
+        # GET CURRENT DIRECTORY
+        str(Path(__file__).parent.parent.parent),
+        "/Users/jso/code/plain",
+        "plain",
+        overwrite=True,
+    )
 
 ```
 
@@ -228,10 +217,125 @@ Indices and tables
 * :ref:`search`
 ```
 
-src/package/__inti__.py
+src/package/__init__.py
 ```py
 """Package module."""
+
 __version__ = "0.1.0"
+
+```
+
+pyproject.toml
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "jp"
+version = "0.1.0"
+authors = [
+    { name = "jason pickup", email = "your.email@example.com" },
+]
+description = "A short description of your package"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=22.0",
+    "isort>=5.0",
+    "mypy>=1.0",
+    "ruff>=0.0.1",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+select = ["E", "F", "B"]
+ignore = []
+line-length = 88
+
+```
+
+src/tools/concat.py
+```py
+from glob import glob
+from pathlib import Path
+
+package_name = "jp"
+package_full_name = "JUSTPACKAGE"
+authors = "jason pickup"
+email = "a@b.c"
+python_version_min = "3.8"
+
+files = glob("**/*", recursive=True)
+files = [Path(file) for file in files if file != "concat.py" and Path(file).is_file()]
+# not if __pycache__ in the path
+files = [file for file in files if "__pycache__" not in str(file)]
+files = [file for file in files if Path(file).name != "concatenated.md"]
+files = [file for file in files if Path(file).name != "README.md"]
+files = [file for file in files if Path(file).name != "LICENSE"]
+files = list(set(files))
+
+concatenated = ""
+for file in files:
+    with open(file) as f:
+        contents = f.read()
+        try:
+            path_from_root = file.relative_to(Path.cwd())
+        except ValueError:
+            path_from_root = file
+        if file.suffix == ".md":
+            # Indent each line of the Markdown content
+            indented_contents = "\n".join(
+                [f"    {line}" for line in contents.splitlines()]
+            )
+            concatenated += f"{path_from_root}\n```\n{indented_contents}\n```\n\n"
+        else:
+            if file.suffix == file.name:
+                concatenated += f"{path_from_root}\n```\n{contents}\n```\n\n"
+            else:
+                concatenated += f"{path_from_root}\n```{file.suffix.replace('.', '')}\n{contents}\n```\n\n"
+    concatenated = (
+        concatenated.replace("jp", package_name)
+        .replace("JUSTPACKAGE", package_full_name)
+        .replace("jason pickup", authors)
+        .replace("a@b.c", email)
+        .replace("3.8", python_version_min)
+    )
+
+with open("concatenated.md", "w") as f:
+    f.write(concatenated)
 
 ```
 
