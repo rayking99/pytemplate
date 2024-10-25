@@ -4,6 +4,9 @@ import shutil
 
 
 def clone(src, dst, package_name, overwrite=False):
+    if overwrite:
+        shutil.rmtree(dst)
+
     replacements = {
         "my_package": package_name,
         "My Package": " ".join(map(str.capitalize, package_name.split("_"))),
@@ -39,6 +42,14 @@ def clone(src, dst, package_name, overwrite=False):
 
             with open(dest_file, "w") as f:
                 f.write(content)
+
+    gitignore_file = Path(src) / ".gitignore"
+    if gitignore_file.exists():
+        with open(gitignore_file, "r") as f:
+            content = f.read()
+        dest_file = Path(dst) / ".gitignore"
+        with open(dest_file, "w") as f:
+            f.write(content)
 
 
 if __name__ == "__main__":
